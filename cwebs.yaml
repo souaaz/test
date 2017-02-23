@@ -1,0 +1,525 @@
+swagger: '2.0'
+info:
+  title: CWEBS API
+  version: "0.1"
+consumes:
+  - application/json
+produces:
+  - application/json
+security:
+  # enable OAuth protection for all REST endpoints
+  # (only active if the TOKENINFO_URL environment variable is set)
+  - oauth2: [uid]
+paths:
+  /cwebs/version/:
+    get:
+      tags: [CWEBS]
+      operationId: app.get_version
+      summary: Get Version
+      
+      responses:
+        200:
+          description: Return version
+          schema:
+            type: string
+           
+  /all_fares/:
+    get:
+      summary: Gets all fares
+      operationId: app.get_all_fares
+
+      description: Returns a list containing all fares.
+      responses:
+        200:
+          description: A list of Fare
+          schema:
+            type: array
+            items:
+              required:
+                - username
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                username:
+                  type: string
+
+  /fares/read_book_order/:
+    post:
+      summary: Get 1 fare
+      operationId: app.get_fare
+      description: read 1 fare
+      parameters:
+        - name: fare_number
+          in: body
+          description: fare fare_number
+          schema:
+            required:             
+              - fare_number
+            properties:
+              fare_type:
+                type: string
+              fare_number:
+                type: string
+      responses:
+        200:
+          description: A list of Fare
+          schema:
+            type: array
+            items:
+              required:
+                - username
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                username:
+                  type: string
+        404:
+          description: Fare does not exist
+
+
+  /dispatcher/save_book_order/:
+    post:
+      summary: Creates a fare
+      operationId: app.create_fare
+      description: Adds a new fare
+      parameters:
+        - name: fare
+          in: body
+          description: Adds a new fare.
+          schema:
+            $ref: "#/definitions/FareCreation"
+      responses:
+        204:
+          description: Fares succesfully created.
+        400:
+          description: Fare could not be created.
+
+
+  /message/send_driver_msg/:
+    post:
+      summary: Message to driver 
+      operationId: app.send_driver_msg
+      description: Message to driver 
+      parameters:
+        - name: driver_msg
+          in: body
+          description: Adds a new mesg
+          schema:
+            $ref: "#/definitions/DriverMsg"
+      responses:
+        200:
+          description: Message to driver succesfully sent.
+        400:
+          description: Message could not be sent.
+
+
+  /message/send_vehicle_msg/:
+    post:
+      summary: Message to vehicle 
+      operationId: app.send_vehicle_msg
+      description: Message to vehicle
+      parameters:
+        - name: vehicle_msg
+          in: body
+          description: Adds a new mesg
+          schema:
+            $ref: "#/definitions/VehicleMsg"
+      responses:
+        200:
+          description: Message to vehicle succesfully sent.
+        400:
+          description: Message could not be sent.
+
+  /message/send_fleet_msg/:
+    post:
+      summary: Message to fleet 
+      operationId: app.send_fleet_msg
+      description: Message to fleet
+      parameters:
+        - name: fleet_msg
+          in: body
+          description: Adds a new mesg
+          schema:
+            $ref: "#/definitions/FleetMsg"
+      responses:
+        200:
+          description: Message to fleet succesfully sent.
+        400:
+          description: Message could not be sent.
+
+definitions:
+  Fare:
+    required:
+      - username
+    properties:
+      firstName:
+        type: string
+      lastName:
+        type: string
+      username:
+        type: string
+  Fares:
+    type: array
+    items:
+      $ref: "#/definitions/Fare" 
+  DriverMsg:
+    required:
+      - driver_id
+      - operator_id
+      - mesg
+      - company_id
+    properties:        
+        driver_id:
+          type: integer
+          format: int32
+          minimum: 1        
+        operator_id: 
+          type: integer       
+          format: int32
+          minimum: 1                 
+        mesg:
+          type: array
+          items: 
+            type: string
+            minItems: 2
+        company_id:
+          type: integer
+          format: int32
+          minimum: 1         
+        farenumber:
+          type: string 
+          pattern: "[0-9]{4,15}"
+          minLength: 4
+          maxLength: 15        
+        driver_name:
+          type: string
+          minLength: 2
+        operator_name:
+          type: string
+          minLength: 2
+        zone:
+          type: integer
+
+  VehicleMsg:
+    required:
+      - taxi
+      - operator_id
+      - mesg
+      - company_id
+    properties:        
+        taxi:
+          type: integer
+          format: int32
+          minimum: 1
+        operator_id: 
+          type: integer       
+          format: int32
+          minimum: 1          
+        mesg:
+          type: array
+          items: 
+            type: string
+            minItems: 2
+        company_id:
+          type: integer
+          format: int32
+          minimum: 1          
+
+        farenumber:
+          type: string 
+          pattern: "[0-9]{4,15}"
+          minLength: 4
+          maxLength: 15        
+        driver_name:
+          type: string
+          minLength: 2
+        operator_name:
+          type: string
+          minLength: 2
+        zone:
+          type: integer
+          format: int32
+          minimum: 0
+
+  FleetMsg:
+    required:
+      - fleet
+      - operator_id
+      - mesg
+      - company_id
+    properties:        
+        fleet:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2000
+        operator_id: 
+          type: integer       
+          format: int32
+          minimum: 1                 
+        mesg:
+          type: array
+          items: 
+            type: string
+            minItems: 2
+        company_id:
+          type: integer
+          format: int32
+          minimum: 1          
+        operator_name:
+          type: string
+          minLength: 2
+        zone:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 64
+
+
+  FareCreation:
+    required:
+      - pick_up_city
+      - fleet_number
+      - pick_up_lat
+      - pick_up_lng
+    properties:
+      pick_up_city:
+        type: string
+        minLength: 2
+      fleet_number:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 64
+      pick_up_lat:
+        type: number
+        format: double
+        minimum: -90.0
+        maximum: 90.0
+      pick_up_lng:
+        type: number
+        format: double
+        minimum: -180.0
+        maximum: 180.0
+
+
+      account_number: 
+        type: string 
+
+      bid_call:
+        type: string
+
+      bid_info:
+        type: array
+        items:
+          type: string
+
+      customer_number:
+        type: string 
+
+      callout_not_allowed:
+        type: string
+
+      contact_name:
+        type: string
+
+   
+      driver_preference:
+        type: array
+        items:
+          type: integer
+          format: int32
+          maxItems: 16
+
+      flat_rate:
+        type: string
+
+      dest_building_type:
+        type: string
+
+      dest_zone:
+        type: integer
+        format: int32
+
+      destination_street_name: 
+        type: string 
+
+      destination_apartment_number: 
+        type: string 
+
+      destination_apartment_code: 
+        type: string 
+
+      destination_street_number: 
+        type: string 
+
+      destination_city:
+        type: string 
+
+      destination_building_name:
+        type: string 
+
+      destination_lat:
+        type: number          
+        format: double
+        minimum: -90.0
+        maximum: 90.0          
+
+      destination_lng: 
+        type: number
+        format: double
+        minimum: -180.0
+        maximum: 180.0    
+
+      driver_id:
+          type: integer
+          format: int32
+          minimum: 1        
+
+      estimated_mileage:
+        type: integer
+        format: int32
+
+      exclude_ivr:
+        type: string
+
+      fare_type:
+        type: string 
+
+      force_zone:
+        type: string
+
+      is_corporate_account:
+        type: boolean
+
+      is_flat_rate:
+        type: boolean
+
+      local_call:
+        type: string
+
+      dispatch_priority:
+        type: integer
+        format: int32
+   
+      mobile:
+        type: string 
+
+      number_of_jobs:
+        type: integer
+        format: int32
+
+      no_service:
+        type: string
+ 
+      order_id:
+        type: string
+        pattern: "[0-9a-zA-Z]{1,11}"
+        minLength: 1
+        maxLength: 11
+
+      operator_id: 
+        type: integer       
+        format: int32
+        minimum: 1                 
+
+      pickup_datetime:
+        type: string
+
+      pick_up_building_type:
+        type: string
+
+      priority_call:
+        type: string
+
+   
+      orig_time:
+        type: string
+
+
+      payment_method:
+        type: string
+
+      passenger_name: 
+        type: string 
+        pattern: "[0-9a-zA-Z]{1,32}"
+
+      pick_up_building_name:
+        type: string 
+
+      pick_up_apartment_number:
+        type: string 
+
+      pick_up_apartment_code:
+        type: string 
+
+      pick_up_street_number:
+        type: string 
+
+      pick_up_street_name:
+        type: string 
+
+      pick_up_zip_code:
+        type: string 
+      pick_up_passengers:
+        type: integer
+        format: int32          
+    
+      phone:
+        type: string 
+
+      prompts: 
+        type: array
+        items:
+          type: string 
+
+      quick_return:
+        type: string
+
+      remarks:
+        type: array
+        items:
+          type: string
+          minItems: 4
+          maxItems: 4          
+
+      restricted_code:
+        type: string
+
+      signature_required:
+        type: string 
+
+      tip_amount:
+        type: string
+
+      txt_back:
+        type: string 
+  
+      vehicle_number:
+        type: integer
+        format: int32
+        minimum: 1        
+
+      vehicle_preference:
+        type: array
+        items:
+          type: integer
+          format: int32
+          maxItems: 16
+
+  
+
+
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: https://example.com/oauth2/dialog
+    scopes:
+      uid: Unique identifier of the user accessing the service.
+
+
