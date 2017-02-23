@@ -93,8 +93,10 @@ paths:
           schema:
             $ref: "#/definitions/FareCreation"
       responses:
-        204:
-          description: Fares succesfully created.
+        200:
+          description: Return fare created
+          schema:
+            $ref: '#/definitions/FareCreated'              
         400:
           description: Fare could not be created.
 
@@ -511,8 +513,33 @@ definitions:
           format: int32
           maxItems: 16
 
-  
+  FareCreatedData:
+    required:
+      - message
+      - zone
+      - job_number
+      - fare_type
+    properties:
+      message:
+        type: string
+      zone:
+        type: integer
+      job_number:
+        type: string
+      fare_type:
+        type: string
 
+  FareCreated:
+    required:
+      - status
+      - result
+    properties:
+      status:
+        type: string
+      result:       
+          $ref: "#/definitions/FareCreatedData"          
+
+ 
 
 securityDefinitions:
   oauth2:

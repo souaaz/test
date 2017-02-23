@@ -29,7 +29,18 @@ def get_fare(fare_number):
 
 def create_fare(fare):
     logger.info('Received ...')
-    return 'Fare Created', 200
+    
+    f = {
+        "status": "200 OK",
+        "result": {
+        "message": "success",
+        "zone": 17,
+        "job_number": "9825",
+        "fare_type": "future"
+        }
+    }
+    print ( f)
+    return f, 200
 
 def send_msg(driver_msg=None, vehicle_msg=None, fleet_msg=None):
     try:
