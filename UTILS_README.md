@@ -462,3 +462,17 @@ Finally, add another new record, but select CNAME Record. For Host set www and f
 
 [Julia Lovett link] (https://medium.com/@LovettLovett/github-pages-godaddy-f0318c2f25a#.hsgsff6iw)
 [Stackoerverflow link] (http://stackoverflow.com/questions/9082499/custom-domain-for-github-project-pages)
+
+
+## MAIL
+[MAIL](http://naelshiab.com/tutorial-send-email-python/)
+ https://docs.python.org/2/library/smtplib.html 
+– http://www.tutorialspoint.com/python/python_sending_email.htm
+– http://en.wikibooks.org/wiki/Python_Programming/Email
+– http://www.pythonforbeginners.com/code-snippets-source-code/using-python-to-send-email
+– https://docs.python.org/2/library/email.mime.html
+– https://docs.python.org/2/library/email-examples.html
+– https://docs.python.org/2/library/email.html
+– http://www.blog.pythonlibrary.org/2013/06/26/python-102-how-to-send-an-email-using-smtplib-email/
+– http://www.smipple.net/snippet/Jimmyromanticde/gmail.py
+
