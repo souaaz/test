@@ -342,33 +342,7 @@ sudo /etc/init.d/nginx start
 ---
 
 
-# CONFIDENTIAL
-AWS Instances: 
-HOP SERVER
-support@10.10.1.229    
-port: 30022                                      
-password: %Xrf018B
 
-scp -P 30022 <xxx> support@10.10.1.229:/tmp
-
-VPN:
-internal - 10.10.1.236
-external - 64.179.222.40
-Port https/443
-un: souaaz
-pw:Welcome2015!
-
-PayNet Credentials  (this will allow you to view your transactions)
-URL:  http://paynet-staging.cmtnyc.com
-Username:  TaxiHail
-Password: welcome123
-
-drivelinq.dyndns-ip.com:2140 
-Account: LINQ/tgray
-Pass: Password01 
-
-XDS Login: cantech
-Password: image
 
 # ARCUS INSTALL
 ARCUS INSTALL
