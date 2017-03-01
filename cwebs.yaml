@@ -25,6 +25,7 @@ paths:
            
   /all_fares/:
     get:
+      tags: ["tests"]
       summary: Gets all fares
       operationId: app.get_all_fares
 
@@ -47,6 +48,7 @@ paths:
 
   /fares/read_book_order/:
     post:
+      tags: [CWEBS]      
       summary: Get 1 fare
       operationId: app.get_fare
       description: read 1 fare
@@ -77,12 +79,13 @@ paths:
                   type: string
                 username:
                   type: string
-        404:
+        400:
           description: Fare does not exist
 
 
   /dispatcher/save_book_order/:
     post:
+      tags: [CWEBS]      
       summary: Creates a fare
       operationId: app.create_fare
       description: Adds a new fare
@@ -102,11 +105,12 @@ paths:
 
   /dispatcher/modify_book_order/:
     post:
+      tags: [CWEBS]      
       summary: Modifies a fare
       operationId: app.modify_fare
       description: Modifies a fare
       parameters:
-        - name: fare_modify
+        - name: fare
           in: body
           description:  Modifies a fare
           schema:
@@ -121,6 +125,7 @@ paths:
 
   /dispatcher/cancel_book_order/:
     post:
+      tags: [CWEBS]      
       summary: Cancels a fare
       operationId: app.cancel_fare
       description: Cancels a new fare
@@ -141,6 +146,7 @@ paths:
 
   /message/send_driver_msg/:
     post:
+      tags: [CWEBS]      
       summary: Message to driver 
       operationId: app.send_driver_msg
       description: Message to driver 
@@ -159,6 +165,7 @@ paths:
 
   /message/send_vehicle_msg/:
     post:
+      tags: [CWEBS]      
       summary: Message to vehicle 
       operationId: app.send_vehicle_msg
       description: Message to vehicle
@@ -176,6 +183,7 @@ paths:
 
   /message/send_fleet_msg/:
     post:
+      tags: [CWEBS]      
       summary: Message to fleet 
       operationId: app.send_fleet_msg
       description: Message to fleet
@@ -193,6 +201,7 @@ paths:
 
   /dispatcher/update_fare/:
     post:
+      tags: [CWEBS]      
       summary: Update fare
       operationId: app.update_fare
       description: update fare
@@ -208,6 +217,102 @@ paths:
         400:
           description: Update did not succeed.
 
+  /driver/action/:
+    post:
+      tags: [CWEBS]      
+      summary: Update, Add, Delete a driver 
+      operationId: app.driver_action
+      description: Update, Add a driver
+      parameters:
+        - name: action_params
+          in: body
+          description: driver params
+          schema:
+            $ref: "#/definitions/ActionDriverData"
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+
+  /fleet/action/:
+    post:
+      tags: [CWEBS]      
+      summary: Update, Add, Delete a fleet
+      operationId: app.fleet_action
+      description: Update, Add a fleet
+      parameters:
+        - name: action_params
+          in: body
+          description: fleet params
+          schema:
+            $ref: "#/definitions/ActionFleetData"
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+
+  /supervisor/action/:
+    post:
+      tags: [CWEBS]      
+      summary:  suspend and reinstate drivers
+      operationId: app.supervisor_action
+      description: suspend and reinstate drivers
+      parameters:
+        - name: action_params
+          in: body
+          description: action params
+          schema:
+            $ref: "#/definitions/ActionSupervisorData"
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+
+  /vehicle/action/:
+    post:
+      tags: [CWEBS]
+      summary: Update, Add, Delete, Suspend, Reinstate a vehicle
+      operationId: app.vehicle_action
+      description: Update, Add a vehicle
+      parameters:
+        - name: action_params
+          in: body
+          description: vehicle params
+          schema:
+            $ref: "#/definitions/ActionVehicleData"
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+
+
+
+  /vehicle/suspend_list/:
+    get:
+      tags: [CWEBS]
+      operationId: app.vehicle_suspend_list
+      summary: List of suspended vehicles      
+      responses:
+        200:
+          description: Return version
+          schema:
+            type: string      
+
+  /driver/suspend_list/:
+    get:
+      tags: [CWEBS]
+      operationId: app.driver_suspend_list
+      summary: List of suspended drivers
+      
+      responses:
+        200:
+          description: Return version
+          schema:
+            type: string      
 
 definitions:
   Fare:
@@ -267,82 +372,6 @@ definitions:
           type: integer
           default: 17
 
-  VehicleMsg:
-    required:
-      - taxi
-      - operator_id
-      - mesg
-      - company_id
-    properties:        
-        taxi:
-          type: integer
-          format: int32
-          minimum: 1
-        operator_id: 
-          type: integer       
-          format: int32
-          minimum: 1          
-        mesg:
-          type: array
-          items: 
-            type: string
-            minItems: 2
-        company_id:
-          type: integer
-          format: int32
-          minimum: 1          
-
-        farenumber:
-          type: string 
-          pattern: "[0-9]{4,15}"
-          minLength: 4
-          maxLength: 15        
-        driver_name:
-          type: string
-          minLength: 2
-        operator_name:
-          type: string
-          minLength: 2
-        zone:
-          type: integer
-          format: int32
-          minimum: 0
-
-  FleetMsg:
-    required:
-      - fleet
-      - operator_id
-      - mesg
-      - company_id
-    properties:        
-        fleet:
-          type: integer
-          format: int32
-          minimum: 0
-          maximum: 2000
-        operator_id: 
-          type: integer       
-          format: int32
-          minimum: 1                 
-        mesg:
-          type: array
-          items: 
-            type: string
-            minItems: 2
-        company_id:
-          type: integer
-          format: int32
-          minimum: 1          
-        operator_name:
-          type: string
-          minLength: 2
-        zone:
-          type: integer
-          format: int32
-          minimum: 0
-          maximum: 64
-
-
   FareCreationRequiredDetails:   
     properties:
       pick_up_city:
@@ -363,7 +392,6 @@ definitions:
         format: double
         minimum: -180.0
         maximum: 180.0
-  
 
   FareCreation:
     required:
@@ -665,7 +693,6 @@ definitions:
       result:       
           $ref: "#/definitions/FareCanceledData"          
 
-
   UpdateFare:
     required:
       - fare_number
@@ -675,23 +702,347 @@ definitions:
     properties:
       fare_number:
         type: string
+        default:  "9243"
       action:
         type: string
+        default: "accept no show"
       cancel_code:
         type: integer
         format: int32
+        default: 12
       reason:
         type: string
+        default: "entered by agent"
       operator_id:
         type: string
+        default: 1001
       operator_name:
         type: string
+        default: "supervisor"
       taxi:
         type: integer
         format: int32
+        default: 8080
       fleet:
         type: integer
         format: int32
+        default: 2
+
+  VehicleMsg:
+    required:
+      - taxi
+      - operator_id
+      - mesg
+      - company_id
+    properties:        
+        taxi:
+          type: integer
+          format: int32
+          minimum: 1
+        operator_id: 
+          type: integer       
+          format: int32
+          minimum: 1          
+        mesg:
+          type: array
+          items: 
+            type: string
+            minItems: 2
+        company_id:
+          type: integer
+          format: int32
+          minimum: 1          
+
+        farenumber:
+          type: string 
+          pattern: "[0-9]{4,15}"
+          minLength: 4
+          maxLength: 15        
+        driver_name:
+          type: string
+          minLength: 2
+        operator_name:
+          type: string
+          minLength: 2
+        zone:
+          type: integer
+          format: int32
+          minimum: 0
+
+  FleetMsg:
+    required:
+      - fleet
+      - operator_id
+      - mesg
+      - company_id
+    properties:        
+        fleet:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2000
+        operator_id: 
+          type: integer       
+          format: int32
+          minimum: 1                 
+        mesg:
+          type: array
+          items: 
+            type: string
+            minItems: 2
+        company_id:
+          type: integer
+          format: int32
+          minimum: 1          
+        operator_name:
+          type: string
+          minLength: 2
+        zone:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 64
+
+  ActionDriverData:
+    required:
+      - driver_id         
+      - company_id         
+      - action 
+    properties:        
+        driver_id:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 8888
+        company_id: 
+          type: integer       
+          format: int32
+          minimum: 1                 
+          default: 1
+        action:       
+          type: string
+          default: "modify"
+        db_action_id:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1          
+        msg_id:
+          type: integer       
+          format: int32
+          default: 1
+    
+  ActionVehicleData:
+    required:
+      - vehicle_id         
+      - company_id         
+      - action 
+    properties:        
+        vehicle_id:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 8888
+        company_id: 
+          type: integer       
+          format: int32
+          minimum: 1  
+          default: 1               
+        action:       
+          type: string
+          default: "modify"
+        msg_for_driver:
+          type: string
+        msg_for_dispatch:
+          type: string          
+        suspension_datetime_start:
+          type: string
+        suspension_datetime_end:
+          type: string
+        authority_id:
+            type: integer          
+            format: int32
+            default: 1001
+        db_action_id:
+          type: integer
+          format: int32
+          minimum: 1          
+          default: 1
+        msg_id:
+          type: integer       
+          format: int32
+          default: 1
+
+
+  ActionFleetData:
+    required:
+      - fleet         
+      - company_id         
+      - action 
+    properties:        
+        fleet:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 2
+        company_id: 
+          type: integer       
+          format: int32
+          minimum: 1                 
+          default: 1
+        action:       
+          type: string
+          default: "modify"
+        name:
+          type: string         
+        operator_id:
+          type: integer       
+          format: int32
+          default: 1001
+        operator_name:
+          type: string
+          default: "supervisor 100"
+
+  ActionSupervisorData:
+    required:
+      - driver_id         
+      - company_id         
+      - action 
+    properties:        
+        driver_id:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 8888
+        company_id: 
+          type: integer       
+          format: int32
+          minimum: 1  
+          default: 1               
+        action:       
+          type: string
+          default: "modify"
+        msg_for_driver:
+          type: string
+        msg_for_dispatch:
+          type: string          
+        suspension_datetime_start:
+          type: string
+        suspension_datetime_end:
+          type: string
+        authority_id:
+            type: integer          
+            format: int32            
+            default: 1001
+        taxi:
+          type: integer
+          format: int32
+          minimum: 1          
+          default: 1001
+        fleet:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 2
+        db_action_id:
+          type: integer
+          format: int32
+          minimum: 1          
+          default: 1
+        msg_id:
+          type: integer       
+          format: int32
+          default: 1
+
+  SuspensionVehicleEntry:
+    properties:
+      ## SuspensionData (object)
+      vehicle_id: 
+        type: integer
+        format: int32
+        default: 8080 
+      suspension_datetime_start:
+        type: string
+      suspension_datetime_end:
+        type: string
+      authority_id: 
+        type: integer
+        default: 999      
+      suspension_timestamp: 
+        type: integer
+        default: 147898875
+      suspension_reasons:
+        type: array
+        items:  # [too fast, always late] array[string]
+          type: string
+          minItems: 2                    
+      company_id: 
+        type: integer       
+        format: int32
+        default: 1
+
+  SuspensionDriverEntry:
+    properties:
+      ## SuspensionData (object)
+      driver_id: 
+        type: integer
+        format: int32
+        default: 8080 
+      suspension_datetime_start:
+        type: string
+      suspension_datetime_end:
+        type: string
+      authority_id: 
+        type: integer
+        default: 999      
+      suspension_timestamp: 
+        type: integer
+        default: 10 
+      suspension_reasons:
+        type: array
+        items:  # [too fast, always late] array[string]
+          type: string
+          minItems: 2                    
+      company_id: 
+        type: integer       
+        format: int32
+        default: 1
+ 
+  SuspensionVehicleListResponse:
+    properties:
+      status: 
+        type : string
+      result:  
+        $ref: "#/definitions/SuspensionVehicleMessageContainer"
+
+  SuspensionDriverListResponse:
+    properties:
+      status: 
+        type : string
+      result:                
+        $ref: "#/definitions/SuspensionDriverMessageContainer"
+
+  SuspensionDriverMessageContainer:
+    properties:
+      number_of_drivers:
+        type: integer
+      message:
+        type: string
+      drivers:
+        type: array
+        items: 
+          $ref: "#/definitions/SuspensionDriverEntry"      
+
+  SuspensionVehicleMessageContainer:
+    properties:
+      number_of_vehicles:
+        type: integer
+      message:
+        type: string
+      drivers:
+        type: array
+        items: 
+            $ref: "#/definitions/SuspensionVehicleMessageContainer"      
 
 securityDefinitions:
   oauth2:

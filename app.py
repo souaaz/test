@@ -115,7 +115,7 @@ def cancel_fare(fare):
         del FARES[fare_number]
         return NoContent, 204
     else:
-        return NoContent, 404
+        return 'Fare not found', 404
 
 def modify_fare(fare):
     fare_id = fare['fare_number']
@@ -124,7 +124,7 @@ def modify_fare(fare):
         del FARES[fare_id]
         return NoContent, 204
     else:
-        return NoContent, 404
+        return 'Fare not found', 404
 
 
 def update_fare(fare):
@@ -133,8 +133,26 @@ def update_fare(fare):
         logging.info('Deleting fare %s..', fare_id)
         del FARES[fare_id]
         return NoContent, 204
-    else:
-        return NoContent, 404
+    else:        
+        return 'Fare not found', 404        
+
+def vehicle_action(action_params):
+    return "success", 200
+
+def driver_action(action_params):
+    return "success", 200
+
+def fleet_action(action_params):
+    return "success", 200
+
+def supervisor_action(action_params):
+    return "success", 200
+
+def vehicle_suspend_list():
+    return "success", 200
+
+def driver_suspend_list():
+    return "success", 200        
 
 def setup_logging():
    
@@ -177,6 +195,93 @@ def setup_logging_cfg(
     logger = logging.getLogger()
     return logger
 
+
+'''
+
+import re
+
+def test_reg():
+  str = 'purple alice-b@google.com monkey dishwasher'
+  str = 'https://www.google.ca/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=OPEN+GOC+GITHUB&*'
+  str= 'http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng&SCR=Q&Sort=0'
+  str ='http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=L;Sort=0;PF=CL201617Q3.txt'
+  #http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=990
+  #str = 'http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=622'
+
+  name_list = []
+  #take out http://
+  
+  match_list = [ r'([http:/])/([\w.-]+)', r'([\w.-]+);PF=([\w.-]+)', r'([\w.-]+);LN=([\w.-]+)']
+
+  match = re.search(r'([http:/])/([\w.-]+)', str)
+  if match:   
+    print match.group(2)  
+
+
+  match = re.search(r'([\w.-]+);PF=([\w.-]+)', str)
+  if match:  
+    print match.group(2)  ## 'google.com' (the host, group 2
+
+  match = re.search(r'([\w.-]+);LN=([\w.-]+)', str)
+  if match:  
+    print match.group(2)  ## 'google.com' (the host, group 2
+
+  for i in match_list:
+    match = re.search (i, str)
+    if match:
+        name_list.append(match.group(2))
+
+  filename = '_'.join(name_list)
+  return filename
+
+def test_reg_all(): 
+  str ='http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=L;Sort=0;PF=CL201617Q3.txt'
+  #http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=990
+  str = 'http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=622'
+
+  name_list = []
+  #take out http://
+  
+
+  match = re.findall(r'([\w.-]+)=([\w.-]+)', str)
+  for i in match:
+    print ( i)
+
+  match = re.findall(r'([\w.-]+)/([\w.-]+)', str[6:])
+  for i in match:
+    print ( i)
+
+def make_name(s):
+    import md5  
+    try:
+        m = md5.new()
+        m.update(s)
+        h = m.digest()
+        return h
+    except Exception as e:
+        print (' ERROR ...')
+    return None
+
+
+if __name__ == '__main__':
+    print (test_reg()    )
+    print ( test_reg_all() )
+
+    print('\n')
+    flst = [
+     u"http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=622",
+      u'https://www.google.ca/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=OPEN+GOC+GITHUB&*'
+      u'http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng;SCR=D;Sort=0;PF=CL201617Q3.txt;LN=622',
+    u'http://www.tpsgc-pwgsc.gc.ca/cgi-bin/proactive/cl.pl?lang=eng&SCR=Q&Sort=0',
+    ]
+
+    for fn in flst:
+        h = make_name(fn)
+        if h != None:
+            print ( "name={0} hash={1}".format(fn, h))
+
+
+'''
 
 #logging.basicConfig(level=logging.INFO)
 logger = setup_logging()
