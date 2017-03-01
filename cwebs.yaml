@@ -100,6 +100,44 @@ paths:
         400:
           description: Fare could not be created.
 
+  /dispatcher/modify_book_order/:
+    post:
+      summary: Modifies a fare
+      operationId: app.modify_fare
+      description: Modifies a fare
+      parameters:
+        - name: fare_modify
+          in: body
+          description:  Modifies a fare
+          schema:
+            $ref: "#/definitions/FareModification"
+      responses:
+        200:
+          description: Return fare 
+          schema:
+            $ref: '#/definitions/FareCreated'              
+        400:
+          description: Fare could not be modified.
+
+  /dispatcher/cancel_book_order/:
+    post:
+      summary: Cancels a fare
+      operationId: app.cancel_fare
+      description: Cancels a new fare
+      parameters:
+        - name: fare
+          in: body
+          description: Cancels a fare.
+          schema:
+            $ref: "#/definitions/FareCancelation"
+      responses:
+        200:
+          description: Return fare cancel
+          schema:
+            $ref: '#/definitions/FareCanceled'              
+        400:
+          description: Fare could not be canceled.
+
 
   /message/send_driver_msg/:
     post:
@@ -153,6 +191,24 @@ paths:
         400:
           description: Message could not be sent.
 
+  /dispatcher/update_fare/:
+    post:
+      summary: Update fare
+      operationId: app.update_fare
+      description: update fare
+      parameters:
+        - name: fare
+          in: body
+          description: Update Fare Status
+          schema:
+            $ref: "#/definitions/UpdateFare"
+      responses:
+        200:
+          description: success
+        400:
+          description: Update did not succeed.
+
+
 definitions:
   Fare:
     required:
@@ -178,11 +234,13 @@ definitions:
         driver_id:
           type: integer
           format: int32
-          minimum: 1        
+          minimum: 1  
+          default: 999
         operator_id: 
           type: integer       
           format: int32
           minimum: 1                 
+          default: 999
         mesg:
           type: array
           items: 
@@ -192,11 +250,13 @@ definitions:
           type: integer
           format: int32
           minimum: 1         
+          default: 999
         farenumber:
           type: string 
           pattern: "[0-9]{4,15}"
           minLength: 4
           maxLength: 15        
+          default: "1234"
         driver_name:
           type: string
           minLength: 2
@@ -205,6 +265,7 @@ definitions:
           minLength: 2
         zone:
           type: integer
+          default: 17
 
   VehicleMsg:
     required:
@@ -282,6 +343,28 @@ definitions:
           maximum: 64
 
 
+  FareCreationRequiredDetails:   
+    properties:
+      pick_up_city:
+        type: string
+        minLength: 2
+      fleet_number:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 64
+      pick_up_lat:
+        type: number
+        format: double
+        minimum: -90.0
+        maximum: 90.0
+      pick_up_lng:
+        type: number
+        format: double
+        minimum: -180.0
+        maximum: 180.0
+  
+
   FareCreation:
     required:
       - pick_up_city
@@ -307,107 +390,100 @@ definitions:
         format: double
         minimum: -180.0
         maximum: 180.0
-
-
+    allOf:
+     - $ref: "#/definitions/FareDetails"             
+ 
+  FareDetails:   
+    properties:
+      pick_up_city:
+        type: string
+        minLength: 2
+      fleet_number:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 64
+      pick_up_lat:
+        type: number
+        format: double
+        minimum: -90.0
+        maximum: 90.0
+      pick_up_lng:
+        type: number
+        format: double
+        minimum: -180.0
+        maximum: 180.0
       account_number: 
         type: string 
-
       bid_call:
         type: string
-
       bid_info:
         type: array
         items:
           type: string
-
       customer_number:
         type: string 
-
       callout_not_allowed:
         type: string
-
       contact_name:
-        type: string
-
-   
+        type: string 
       driver_preference:
         type: array
         items:
           type: integer
           format: int32
           maxItems: 16
-
       flat_rate:
         type: string
-
       dest_building_type:
         type: string
-
       dest_zone:
         type: integer
         format: int32
-
       destination_street_name: 
         type: string 
-
       destination_apartment_number: 
         type: string 
-
       destination_apartment_code: 
         type: string 
-
       destination_street_number: 
         type: string 
-
       destination_city:
         type: string 
-
       destination_building_name:
         type: string 
-
       destination_lat:
         type: number          
         format: double
         minimum: -90.0
         maximum: 90.0          
-
       destination_lng: 
         type: number
         format: double
         minimum: -180.0
         maximum: 180.0    
-
       driver_id:
           type: integer
           format: int32
           minimum: 1        
-
       estimated_mileage:
         type: integer
         format: int32
-
       exclude_ivr:
         type: string
-
       fare_type:
         type: string 
-
       force_zone:
         type: string
-
       is_corporate_account:
         type: boolean
-
       is_flat_rate:
         type: boolean
-
       local_call:
         type: string
-
       dispatch_priority:
         type: integer
-        format: int32
-   
+        format: int32 
       mobile:
         type: string 
 
@@ -539,7 +615,83 @@ definitions:
       result:       
           $ref: "#/definitions/FareCreatedData"          
 
- 
+  FareModifyCancel:
+    required:
+      - fare_number
+    properties:    
+      fare_number:
+        type: string
+        default: "1234"
+      fare_type:
+        type: string
+        default: "immediate" 
+
+  FareModification:
+      allOf:       
+          - $ref: "#/definitions/FareDetails"        
+          - $ref: "#/definitions/FareModifyCancel"
+
+  FareCancelation:
+    required:
+      - fare_number
+    properties:
+      fare_number:
+        type: string
+        default: "1234"
+      fare_type:
+        type: string
+        default: "immediate"
+
+  FareCanceledData:
+    required:
+      - message   
+      - job_number
+      - fare_type
+    properties:
+      message:
+        type: string 
+      job_number:
+        type: string
+      fare_type:
+        type: string
+
+  FareCanceled:
+    required:
+      - status
+      - result
+    properties:
+      status:
+        type: string
+      result:       
+          $ref: "#/definitions/FareCanceledData"          
+
+
+  UpdateFare:
+    required:
+      - fare_number
+      - action 
+      - reason
+      - operator_id
+    properties:
+      fare_number:
+        type: string
+      action:
+        type: string
+      cancel_code:
+        type: integer
+        format: int32
+      reason:
+        type: string
+      operator_id:
+        type: string
+      operator_name:
+        type: string
+      taxi:
+        type: integer
+        format: int32
+      fleet:
+        type: integer
+        format: int32
 
 securityDefinitions:
   oauth2:

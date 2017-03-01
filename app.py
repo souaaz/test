@@ -108,7 +108,27 @@ def post_fare(fare, fare_id=None):
     return NoContent, (200 if exists else 201)
 
 
-def delete_fare(fare_id):
+def cancel_fare(fare):
+    fare_number = fare['fare_number']
+    if fare_number in FARES:
+        logging.info('Canceling fare %s..', fare_number)
+        del FARES[fare_number]
+        return NoContent, 204
+    else:
+        return NoContent, 404
+
+def modify_fare(fare):
+    fare_id = fare['fare_number']
+    if fare_id in FARES:
+        logging.info('Modifying fare %s..', fare_id)
+        del FARES[fare_id]
+        return NoContent, 204
+    else:
+        return NoContent, 404
+
+
+def update_fare(fare):
+    fare_id = fare['fare_number']
     if fare_id in FARES:
         logging.info('Deleting fare %s..', fare_id)
         del FARES[fare_id]
