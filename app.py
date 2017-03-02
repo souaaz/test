@@ -23,8 +23,9 @@ def get_all_fares():
 def get_fares(limit, fare_type=None):
     return [f for f in FARES.values() if not fare_type or f['fare_type'] == fare_type][:limit]
 
-def get_fare(fare_number):
-    f = FARES.get(fare_number)
+def get_fare(fare):
+    fare_id = fare['fare_number']
+    f = FARES.get(fare_id)
     return f or ('Not found', 404)
 
 def create_fare(fare):
@@ -154,6 +155,34 @@ def vehicle_suspend_list():
 def driver_suspend_list():
     return "success", 200        
 
+def get_corporate_account(account_number, customer_number):
+    return "success", 200    
+
+def get_all_accounts():
+    return "success", 200    
+
+def send_device_msg():
+   return "success", 200    
+
+def clear_emergency():
+   return "success", 200    
+
+def redispatch_fare():
+    return "success", 200       
+
+def validate_account():
+    return "success", 200       
+
+def update_fare_amount(fare):
+   return "success", 200       
+
+def get_zonevehicles():
+  return "success", 200  
+
+
+def get_dummy():
+    return "success", 200        
+
 def setup_logging():
    
     logger = logging.getLogger(__name__)
@@ -194,6 +223,9 @@ def setup_logging_cfg(
 
     logger = logging.getLogger()
     return logger
+
+
+
 
 
 '''
@@ -282,16 +314,21 @@ if __name__ == '__main__':
 
 
 '''
-
 #logging.basicConfig(level=logging.INFO)
+
+
+
+
+
 logger = setup_logging()
+
 app = connexion.App(__name__)
 app.add_api('cwebs.yaml')
 # set the WSGI application callable to allow using uWSGI:
 # uwsgi --http :8080 -w app
 application = app.app
 
-if __name__ == '__main__':
-   
+if __name__ == '__main__':   
+    
     # run our standalone gevent server
     app.run(port=8080, server='gevent')
