@@ -38,11 +38,9 @@ security:
 #POST /account/MDT_check/
 #POST /update_payment_type/
 #GET /zone_by_gps/
-#GET /dispatcher/zonesetzones/ 
 #GET /dispatcher/zonestatus/<fleet_number> 
 #POST /message/callout_response/
 #POST /update_destination/
-#POST /account/MDT_check/
 
 
 #/fares/search_payment/ 
@@ -61,6 +59,13 @@ parameters:
     in: path
     type: integer
     format: int32
+  fleet_number:
+    name: fleet_number
+    description: fleet number
+    in: path
+    type: integer
+    format: int32
+
 
 paths:
   /cwebs/version/:
@@ -78,8 +83,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'            
-
-
 
   /all_fares/:
     get:
@@ -128,7 +131,8 @@ paths:
                 type: string
               fare_number:
                 type: string
-
+              via_requested:
+                type: boolean
       responses:
         200:
           description: A fare
@@ -150,7 +154,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'            
-
 
   /dispatcher/save_book_order/:
     post:
@@ -437,7 +440,7 @@ paths:
         200:
           description: Return version
           schema:
-            type: string      
+            $ref: '#/definitions/SuspensionVehicleListResponse'    
         default:
           description: Unexpected error
           schema:
@@ -453,7 +456,7 @@ paths:
         200:
           description: Return version
           schema:
-            type: string      
+            $ref: '#/definitions/SuspensionDriverListResponse'      
         default:
           description: Unexpected error
           schema:
@@ -538,8 +541,8 @@ paths:
     post:
       tags: [CWEBS, message]
       operationId: app.send_device_msg
-      summary: send_device_msg
-      description: send_device_msg
+      summary: send device msg
+      description: send device msg
       parameters:
         - name: vehicle
           in: body
@@ -549,11 +552,17 @@ paths:
               vehicle_id:
                 type: integer
                 format: int32
+                default: 1
               company_id:
                 type: integer
                 format: int32            
+                default: 1
               msgtext:
-                type: string           
+                type: string
+                default: 'sample text msg'
+              device:
+                type: string 
+                default: "vehicle"          
 
       responses:
         200:
@@ -629,7 +638,86 @@ paths:
                 format: int32
               fare_number:
                 type: string
-                   
+            
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'  
+
+  ##???
+  /dispatcher/qtotals/:
+    get:
+      tags: [CWEBS, zone]
+      operationId: app.get_qtotals
+      summary: zone vehicles
+      description: zone vehicles          
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'   
+
+  /dispatcher/zonestatus/{fleet_number}/:
+    parameters:
+      - $ref: '#/parameters/fleet_number'    
+    get:
+      tags: [CWEBS, zone]
+      operationId: app.get_zonestatus
+      summary: zone vehicles
+      description: zone vehicles          
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'   
+
+  /dispatcher/zonesetzones/:
+    get:
+      tags: [CWEBS, zone]
+      operationId: app.get_zonesetzones
+      summary: zone vehicles
+      description: zone vehicles          
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'   
+
+
+  /message/callout_response/:
+    post:
+      tags: [CWEBS]
+      operationId: app.callout_response
+      summary: update_fare_amount
+      description: update_fare_amount        
+      parameters:
+        - name: fare
+          in: body
+          schema:
+            type: object
+            properties:
+              flat_rate:
+                type: integer
+                format: int32
+              fare_number:
+                type: string                  
 
       responses:
         200:
@@ -640,6 +728,109 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'  
+
+  /update_destination/:
+    post:
+      tags: [CWEBS]
+      operationId: app.update_destination
+      summary: update_fare_amount
+      description: update_fare_amount        
+      parameters:
+        - name: fare
+          in: body
+          schema:
+            type: object
+            properties:
+              flat_rate:
+                type: integer
+                format: int32
+              fare_number:
+                type: string                  
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'  
+
+
+  /account/MDT_check/:
+    post:
+      tags: [CWEBS, account]
+      operationId: app.mdt_check
+      summary: MDT check
+      description: MDT check      
+      parameters:
+        - name: fare
+          in: body
+          schema:
+            type: object
+            properties:
+              account_number:
+                type: integer
+                format: int32        
+              customer_number:
+                type: integer
+                format: int32     
+      responses:
+        200:
+          description: success
+          schema:
+            $ref: '#/definitions/AccountCheckResponse'
+
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'        
+
+  /update_payment_type/:
+    post:
+      tags: [CWEBS]
+      operationId: app.update_payment_type
+      summary: update_fare_amount
+      description: update_fare_amount        
+      parameters:
+        - name: fare
+          in: body
+          schema:
+            type: object
+            properties:
+              flat_rate:
+                type: integer
+                format: int32
+              fare_number:
+                type: string                  
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'  
+
+  /zone_by_gps/:
+    get:
+      tags: [CWEBS, zone]
+      operationId: app.get_zone_by_gps
+      summary: zone vehicles
+      description: zone vehicles          
+      responses:
+        200:
+          description: success
+        400:
+          description: Error 
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'   
+
 
 definitions:
   Fare: 
@@ -1402,10 +1593,10 @@ definitions:
         type: integer
       message:
         type: string
-      drivers:
+      vehicles:
         type: array
         items: 
-            $ref: "#/definitions/SuspensionVehicleMessageContainer"      
+            $ref: "#/definitions/SuspensionVehicleEntry"      
 
   AccountPrompt:
     properties:
@@ -1446,7 +1637,34 @@ definitions:
         type: string
       message:
         type: string
-  
+
+  AccountCheckData:
+    properties:    
+      number_of_accounts:
+        type: integer
+        format: int32   
+      customer_number:
+        type: integer
+        format: int32        
+      active:
+        type: boolean
+      voucher:
+        type: integer
+        format: int32                
+      account_number:
+        type: string
+      account_name:
+        type: string        
+      message:
+        type: string
+
+
+  AccountCheckResponse:
+    properties:
+      status:
+        type: string
+      result:
+        $ref: '#/definitions/AccountCheckData'
 
   Accounts:
     properties:

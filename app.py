@@ -173,12 +173,36 @@ def redispatch_fare():
 def validate_account():
     return "success", 200       
 
+def get_qtotals():
+    return "success", 200    
+
 def update_fare_amount(fare):
    return "success", 200       
+
+def get_zonesetzones():
+    return "success", 200  
+
+def callout_response():
+    return "success", 200       
+
+def update_destination():
+   return "success", 200   
 
 def get_zonevehicles():
   return "success", 200  
 
+def get_zone_by_gps():
+  return "success", 200  
+
+def get_zonestatus():
+  return "success", 200  
+
+
+def mdt_check():
+    return "success", 200  
+
+def update_payment_type():
+  return "success", 200  
 
 def get_dummy():
     return "success", 200        
