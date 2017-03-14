@@ -55,37 +55,68 @@ def get_all_fares():
 def get_fares(limit, fare_type=None):
     return [f for f in FARES.values() if not fare_type or f['fare_type'] == fare_type][:limit]
 
-def get_fare(fare):
-    fare_id = fare['fare_number']
-    f = FARES.get(fare_id)
-    return f or ('Not found', 404)
+def get_fare(fare):    
+    try:
+        fare_number = fare['fare_number']
+        fare_type = fare ['fare_type'] if 'fare_type' in fare else 'immediate'
+
+        res, _ = find_in_db( db_cur, fare_number, table_name='FARES')
+
+        logger.info ( "get_fare found this {} ".format (res))
+
+        if res:
+            logger.info('getting fare %s..', fare_number)        
+            f = {
+              "status": "200 OK",
+                "result": {
+                    "message": "success",
+                    "job_number": fare_number,
+                    "fare_type": fare_type
+                }
+            }
+            return f, 200
+        else:
+            return error_response, 500
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)
+        return error_response, 500
+
+    return error_response, 500
 
 def create_fare(fare):
     global db_cur
-    logger.info('Received ...', fare)
-    
-    if insert_db(db_cur, fare["fare_id"],  fare["address"], table_name='FARES'):
-        f = {
-            "status": "200 OK",
-            "result": {
-            "message": "success",
-            "zone": 17,
-            "job_number": fare["fare_id"],
-            "fare_type": "immediate"
-            }
-        }
-    else:
-        f = {
-            "status": "500 Internal Server Error",
-            "result": {
-            "message": "Could not create a job",
-            "zone": -1,
-            "job_number": -1           
-            }
-        }        
 
-    logger.info ( f)
-    return f, 200
+    try:
+        logger.info('Received ...', fare)
+    
+        if insert_db(db_cur, fare["fare_id"],  fare["address"], table_name='FARES'):
+            f = {
+                "status": "200 OK",
+                "result": {
+                "message": "success",
+                "zone": 17,
+                "job_number": fare["fare_id"],
+                "fare_type": "immediate"
+                }
+            }
+        else:
+            f = {
+                "status": "500 Internal Server Error",
+                "result": {
+                "message": "Could not create a job",
+                "zone": -1,
+                "job_number": -1           
+                }
+            }        
+
+        logger.info ( f)
+        return f, 200
+ 
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500        
 
 
 def post_fare(fare, fare_id=None):
@@ -100,21 +131,28 @@ def post_fare(fare, fare_id=None):
 
     logger.info (  " ADDRESS .... " , address )
 
-    if fare_id:
-        exists = fare_id in FARES
-        fare['id'] = fare_id
-        if exists:
-            logger.info('Updating fare %s..', fare_id)
-            FARES[fare_id].update(fare)
-            return NoContent, (200)            
-    else:
-        fare_id = str(uuid.uuid4().hex) #'201722' + str(random.randint(0,100))
+    try:
+        if fare_id:
+            exists = fare_id in FARES
+            fare['id'] = fare_id
+            if exists:
+                logger.info('Updating fare %s..', fare_id)
+                FARES[fare_id].update(fare)
+                return NoContent, (200)            
+        else:
+            fare_id = str(uuid.uuid4().hex) #'201722' + str(random.randint(0,100))
 
-    logger.info('Creating fare %s..', fare_id)
-    fare['created'] = datetime.datetime.utcnow()
-    fare['fare_id'] = fare_id
+        logger.info('Creating fare %s..', fare_id)
+        fare['created'] = datetime.datetime.utcnow()
+        fare['fare_id'] = fare_id
     
-    return create_fare (fare)
+        return create_fare (fare)
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
  
 
 def cancel_fare(fare):
@@ -267,25 +305,118 @@ def send_fleet_msg(fleet_msg=None):
     return NoContent, 200
 
 def vehicle_action(action_params):
-    return success_response, 200
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
 
 def driver_action(action_params):
-    return success_response, 200
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500    
 
 def fleet_action(action_params):
-    return success_response, 200
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500    
 
 def supervisor_action(action_params):
-    return success_response, 200
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500    
 
 def vehicle_suspend_list():
-    return "success", 200
+    try:
+
+        f = {
+              "status": "200 OK",
+            "result": {
+            "number_of_drivers": 2,
+            "message": "OK",
+            "drivers": [
+                {
+                "suspension_datetime_end": "",
+                "driver_id": 8080,
+                "suspension_reasons": [
+                "test message for dispatch test me",
+                "test message for driver test mess"
+                    ],
+                "company_id": 1,
+                "suspension_timestamp": 1487196000,
+                "suspension_time_min": 0,
+                "authority_id": 667,
+                "suspension_time": 0,
+                "suspension_datetime_start": "2017-02-15 17:00"
+                },
+                {
+                "suspension_datetime_end": "",
+                "driver_id": 1111,
+                "suspension_reasons": [
+                "test message for dispatch test me",
+                "test message for driver test mess"
+                    ],
+                "company_id": 1,
+                "suspension_timestamp": 1489518712,
+                "suspension_time_min": 0,
+                "authority_id": 667,
+                "suspension_time": 0,
+                "suspension_datetime_start": "2017-03-14 15:11"
+                }
+                ]
+            }   
+        }
+
+        return f, 200
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def driver_suspend_list():
-    return "success", 200        
+    try:
+        f = {
+              "status": "200 OK",
+                "result": {
+                    "message": "success",
+                    "vehicles": [],
+                    "number_of_vehicles": 0
+                }
+            }
+
+        return f, 200
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def get_corporate_account(account_number, customer_number): 
-    f = {
+    try:
+        f = {
             "status": "200 OK",            
             "result": 
             {
@@ -311,10 +442,19 @@ def get_corporate_account(account_number, customer_number):
                 ]              
             }          
         }   
-    return f, 200    
+        return f, 200    
+  
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def get_all_accounts():
-    f = {
+    try:
+
+        f = {
             "status": "200 OK",            
             "result": 
             {
@@ -337,7 +477,14 @@ def get_all_accounts():
                 ]
             }
         }    
-    return f , 200    
+        return f , 200    
+  
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def send_device_msg(vehicle):
     try:
@@ -345,11 +492,24 @@ def send_device_msg(vehicle):
         vehicle_id = vehicle ["vehicle_id"]
 
         return success_response, 200    
+  
     except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
         return error_response, 500
 
+    return error_response, 500
+
 def clear_emergency():
-   return success_response, 200    
+    try:
+
+        return success_response, 200    
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+      
+
+    return error_response, 500
+
 
 def redispatch_fare(fare):
     try:
@@ -396,9 +556,10 @@ def redispatch_fare(fare):
     return error_response, 500
 
 def validate_account(account):
-    account_number = account ["account_number"]
-    customer_number = account ["customer_number"]    
-    f = {
+    try:
+        account_number = account ["account_number"]
+        customer_number = account ["customer_number"]    
+        f = {
             "status": "200 OK",
             "result": {
                 "number_of_accounts": 1,
@@ -409,18 +570,41 @@ def validate_account(account):
                 "message": "OK"
             }
         }
-    return f , 200       
+        return f , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
 
 def get_qtotals():
-    f = {
-        "1": [ 0, 0, 0, 0 ],
-        "2": [ 0, 3, 0, 0],
-        "22": [ 0, 0, 0, 0 ]
-    }
-    return f, 200    
+    try:
+        f = {
+            "1": [ 0, 0, 0, 0 ],
+            "2": [ 0, 3, 0, 0],
+            "22": [ 0, 0, 0, 0 ]
+        }
+        return f, 200    
+    
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def update_fare_amount(fare):
-   return success_response , 200       
+    try:
+
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def get_zonesetzones():
     try:
@@ -444,10 +628,25 @@ def get_zonesetzones():
 
 
 def callout_response():
-    return success_response , 200       
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500
+
 
 def update_destination():
-   return success_response , 200   
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500  
 
 def get_zonevehicles():
     try:
@@ -553,9 +752,10 @@ def get_zonestatus(fleet_number):
 
 
 def mdt_check(fare):
-    customer_number = fare["customer_number"]
-    account_number  = fare["account_number"]
-    f = {
+    try:
+        customer_number = fare["customer_number"]
+        account_number  = fare["account_number"]
+        f = {
             "status": "200 OK",
             "result": 
             {
@@ -567,12 +767,25 @@ def mdt_check(fare):
                 "account_number"  : account_number  ,
                 "account_name" : "SAMIRA",             
             }
-    }
+        }
 
-    return f , 200  
+        return f , 200  
+ 
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500    
 
 def update_payment_type():
-  return success_response , 200  
+    try:
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500  
 
 def setup_logging():
    
