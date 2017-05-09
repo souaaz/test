@@ -243,7 +243,7 @@ def gmsg_purge(num=1):
         pass
 
 
-def gmsg_main(mymap):
+def gmsg_main(mymap, logger):
     while True:
         try:      
             
@@ -253,7 +253,11 @@ def gmsg_main(mymap):
                 mykey = m[10]                                           
                 i = m[9]              
                 val=(i, mykey)
-                sys.stdout.write("%s: mt=%d key=%d, i=%d\n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT),  m[3], mykey, i ))                
+                if logger:
+                    logger.info( "mt=%d key=%d, i=%d\n", m[3], mykey, i)
+                else:
+                    sys.stdout.write("%s: mt=%d key=%d, i=%d\n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT),  m[3], mykey, i ))                
+                             
                
                 if mymap != None:
                     mymap[str(mykey)] = val
@@ -278,6 +282,7 @@ if __name__ == "__main__":
         print ('main gmsg_getq() error ....', str(e))
         sys.exit()
 
+    print ("STARTING ...")
     if mq != None:
         try:
             mymap = {}

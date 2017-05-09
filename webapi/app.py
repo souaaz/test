@@ -124,9 +124,12 @@ def save_book_order():
         try:
             fare = -1
             if "fare" in dic:
-                fare = dic["fare"]         
+                fare = dic["fare"]  
+                logger.info( " Received fare # %s", str(fare))       
                 if len (str(fare)) >  6:
-                    fare  = fare[-6:].lstrip('0')           
+                    fare  = fare[-6:].lstrip('0') 
+
+                fare = str(fare)
 
         except AttributeError:    
             return json.dumps(res)
@@ -422,6 +425,7 @@ def get_open_fds():
     except Exception as e:
         logger.critical(" get_open_fds ... Exception %s\n" % ( str(e)))        
 
+
     return nprocs
 
 def list_fds():
@@ -553,11 +557,12 @@ except Exception as e:
 if __name__ == "__main__":
     try:
 
-
+        import os
         mymap = {} 
 
-        if app:
-            thr = gevent.spawn(msg_q.gmsg_main, mymap)
+        if app:            
+            logger.info ( " PID = %d", os.getpid())
+            thr = gevent.spawn(msg_q.gmsg_main, mymap, logger)
             app.run(host="0.0.0.0", port=8000, debug=True,reloader=True, server="gevent")
 
             logger.info("ENDING ....")
