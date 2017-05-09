@@ -12,6 +12,13 @@ import threading
 import json
 import time
 
+import logging
+import logging.handlers
+
+
+import bottle.ext.memcache
+
+
 from gevent import select
 
 import msg_q as msg_q
@@ -27,6 +34,7 @@ BASE_URL = ''
 
 start = time.time()
 tic = lambda: 'at %1.1f seconds' % (time.time() - start)
+
 
 
 _suspend_file_name = None 
@@ -50,14 +58,24 @@ def set_default_headers(response):
         response.headers["Content-type"] = "application/json"          
         response.headers["User-Agent"] = " ".join ([str(APPNAME) , str(VERSION) ] )
     except Exception as e:
-        sys.stdout.write("%s: set_default_headers Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))            
+        logger.critical("set_default_headers Exception %s \n" % ( str(e) ))            
 
 def send_error(response, errCode=400):
     set_default_headers(response)
     response.status = errCode
     res = {'status': response.status, 'result': { 'message': 'Sorry. Not Found here.'}}
+
+    logger.info( res)
     return json.dumps(res)
 
+
+def send_general_error(response):
+    set_default_headers(response)
+    response.status = 500
+    res = {'status': response.status, 'result': { 'message': 'failure'}}
+
+    logger.info( res)
+    return json.dumps(res)
 
 
 def get_version():
@@ -68,16 +86,16 @@ def get_version():
    
     data = (request, response)
 
-    print ( data )
+    logger.debug( data )
 
-    print ( "get_version ***" , mymap )
+    logger.debug( "get_version ***" , mymap )
 
     mykey =  EntryContainer.generate_seqno()  
     mymap[str(mykey)] = data
 
     v = mymap.get( mykey)
 
-    print ( v )
+    logger.debug ( v )
 
     r = v  
 
@@ -97,11 +115,11 @@ def save_book_order():
         info = request.body.read(clen)
         dic = json.loads(info.decode("utf-8") )
 
-        sys.stdout.write("%s: %s request dictionary %s\n" % (
-                datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), __name__, 
+        logger.info("%s request dictionary %s\n" % (
+                __name__, 
                 str(dic) ) )       
        
-        print ( "save_book_order ***", mymap )
+        logger.info ( "save_book_order %s ***", mymap )
 
         try:
             fare = -1
@@ -110,11 +128,10 @@ def save_book_order():
                 if len (str(fare)) >  6:
                     fare  = fare[-6:].lstrip('0')           
 
-
         except AttributeError:    
             return json.dumps(res)
         except Exception as e:          
-            sys.stdout.write("%s: invalid fare number Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))            
+            logger.critical("invalid fare number Exception %s \n", str(e) )
             return json.dumps(res)
 
         try:
@@ -126,15 +143,15 @@ def save_book_order():
             res = q. get()
 
             if res != None:
-                sys.stdout.write("%s: return from spawn fare res=%s\n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), res))            
+                logger.info("return from spawn fare res=%s\n" % ( res))            
                 if  res['status']  == 200 or  res['status']  == "200 OK" :
                     response.status = 200
                             
         except Exception as e:
-            sys.stdout.write("%s: could not spawn fare Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))            
+            logger.critical("could not spawn fare Exception %s \n" % ( str(e) ))            
           
     except Exception as e:
-        print ('Exception ', str(e))
+        logger.critical('Exception ', str(e))
 
     return json.dumps(res)   
 
@@ -185,12 +202,12 @@ def get_save_rsp(f, to,  response, res, q, mymap):
                     gevent.sleep(0.1)
 
                 except Exception as e:
-                    sys.stdout.write("%s: get_save_rsp *** Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))                                
+                    logger.critical("get_save_rsp *** Exception %s \n" % ( str(e) ))                                
 
 
         except Exception as e:
             res = {'status': response.status, 'result': {'message': 'no response from server', 'job_number': -1 }}   
-            sys.stdout.write("%s: get_save_rsp *** Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))            
+            logger.critical("get_save_rsp *** Exception %s \n" , str(e) )            
 
         res = {'status': 500 , 'result': {'message': 'error response from server', 'job_number': -1 }}    
 
@@ -198,7 +215,7 @@ def get_save_rsp(f, to,  response, res, q, mymap):
           
     except Exception as e:
         res = {'status': 500, 'result': {'message': 'no response from server', 'job_number': -1 }}   
-        sys.stdout.write("%s: get_save_rsp Exception %s \n" % (datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))            
+        logger.critical("get_save_rsp Exception %s \n" , str(e) )            
 
         
 
@@ -225,8 +242,7 @@ def get_driver_suspension_fileinfo():
         else:
             return _suspend_file_name, _suspend_file_format 
     except Exception as e:
-        sys.stdout.write("%s: get_driver_suspension_fileinfo Exception %s ...\n" % ( 
-            datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str (e)  ))
+        logger.critical(" get_driver_suspension_fileinfo Exception %s ...\n",  str (e)  )
    
     #sys.stdout.write("%s: get_driver_suspension_fileinfo %s %s ...\n" % ( 
     #            datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), file_name, frmt ))
@@ -234,9 +250,11 @@ def get_driver_suspension_fileinfo():
     return  file_name, frmt
 
 
-def driver_suspend_list():
+def driver_suspend_list(mc):
     global _mid_dic 
     try: 
+        mykey= 'driver_suspend_list'
+        myttl = 10
         '''
         import psutil
         proc = psutil.Process()
@@ -247,7 +265,7 @@ def driver_suspend_list():
         '''
 
         l = get_open_fds()
-        print ( 'get_open_fds using lsof ', l )
+        logger.debug( 'get_open_fds using lsof %d', l )
 
         response.status = 500            
         
@@ -259,11 +277,17 @@ def driver_suspend_list():
         try:
            file_name, frmt = get_driver_suspension_fileinfo()
         except Exception as e:
-            sys.stdout.write("%s: get_driver_suspend_list Exception %s\n" % (
-                datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), str(e) ))
+            logger.critical("get_driver_suspend_list Exception %s\n" % ( str(e) ))
             file_name = Config.DRIVER_SUSPEND_LIST 
             frmt = 'i i I h 33s 33s c c h h 10s'
 
+        try:
+            v = mc.get(mykey)
+            if v:
+                response.status = 200
+                return json.dumps(v)
+        except Exception as e:
+            logger.critical( 'get key exception %s', e )            
 
         s = struct.Struct(frmt)
         
@@ -271,16 +295,16 @@ def driver_suspend_list():
         number_of_drivers = 0
         try:
             counter = 0
-            #print ('opening file ', file_name)
+            #logger.debug('opening file %s', file_name)
             
             with open(file_name, "rb") as fp: 
-                gevent.sleep(10)   
+                #gevent.sleep(1)   
                 while True:           
                     counter = counter + 1
                     data = fp.read(s.size)
                     if data:
                         tmp = struct.unpack(frmt, data)
-                        #print ('record ', counter, tmp )
+                        #logger.debug('record  %d %s', counter, tmp )
                         # record ( driver_id, duration, timestamp, authority_d, )
                         if tmp[0] > 0 :
                             susp_time = susp_time_m = susp_time_h = 0
@@ -295,11 +319,14 @@ def driver_suspend_list():
 
                                     company_id=0
                                     if len (tmp) > 11:
-                                        market_id = tmp[11]
-                                        market_id = market_id.strip(' ') 
-                                        market_id = market_id.strip('\x00') 
-                                        if market_id in _mid_dic:
-                                            company_id = _mid_dic[market_id]
+                                        try:
+                                            market_id = tmp[11]
+                                            market_id = market_id.strip(' ') 
+                                            market_id = market_id.strip('\x00') 
+                                            if  _mid_dic and market_id in _mid_dic:
+                                                company_id = _mid_dic[market_id]
+                                        except Exception as e:
+                                            logger.info(' **** market id exception **** %s', e ) 
 
                                     for i in range(2):
                                         m =  tmp[4 + i]
@@ -315,7 +342,7 @@ def driver_suspend_list():
                                         if  tmp[2] != 0 and tmp[1] > 0:                                 
                                             t_end = date_utils.convert_2_datetimestring(timestamp=tmp[2], hours=susp_time_h, minutes=susp_time_m)
                                     except Exception as e:   
-                                        print ('exception ', str(e) )
+                                        logger.critical ('exception %s', str(e) )
                                         t_end = ''                                                              
                              
                                     try:
@@ -323,10 +350,11 @@ def driver_suspend_list():
                                         if  tmp[2] != 0:                                           
                                             t_start = date_utils.timestamp_2_datetimestring (tmp[2] )                                
                                     except Exception as e:   
-                                        print( 'exception ', e )
+                                        logger.critical( 'exception %s', e )
                                         t_start = ''
 
                                 except Exception as e:
+                                    logger.info(' **** exception **** %s', e )                                    
                                     pass
 
                                 number_of_drivers = number_of_drivers + 1
@@ -335,7 +363,6 @@ def driver_suspend_list():
                                     "authority_id" : tmp[3],
                                     "suspension_time": susp_time,
                                     "suspension_time_min": susp_time_m,
-                                    #"suspension_time_h": susp_time_h,
                                     "suspension_timestamp": tmp[2],
                                     "suspension_datetime_end" : t_end,
                                     "suspension_datetime_start" : t_start,
@@ -351,17 +378,17 @@ def driver_suspend_list():
             res = {'status': response.status,
                    'result': {'message': 'OK',  'number_of_drivers': number_of_drivers, 'drivers': drivers}
             }
-            #print json.dumps(res)
+
+            mc.set(mykey, res, myttl)
+
             return json.dumps(res)
         except Exception as e:
-            sys.stdout.write("%s: driver_suspend_list... Exception %s\n" % ( 
-                datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) , str(e)))            
+            logger.critical("driver_suspend_list... Exception %s\n" % ( str(e)))            
    
             response.status
             return json.dumps(res)
     except Exception as e:
-        sys.stdout.write("%s: driver_suspend_list... Exception %s\n" % ( 
-            datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) , str(e)))
+        logger.critical("driver_suspend_list... Exception %s\n" % ( str(e)))
 
     set_default_headers(response)
     response.status = 500
@@ -393,8 +420,7 @@ def get_open_fds():
         return nprocs
 
     except Exception as e:
-        sys.stdout.write("%s: get_open_fds ... Exception %s\n" % ( 
-            datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) , str(e)))        
+        logger.critical(" get_open_fds ... Exception %s\n" % ( str(e)))        
 
     return nprocs
 
@@ -404,11 +430,7 @@ def list_fds():
     import sys
     import errno
 
-    """List process currently open FDs and their target 
-    if sys.platform != 'linux2':
-        raise NotImplementedError('Unsupported platform: %s' % sys.platform)
-
-    """
+  
     ret = {}
     base = '/proc/self/fd'
     for num in os.listdir(base):
@@ -429,18 +451,18 @@ def list_fds():
 
 def gr1():
     # Busy waits for a second, but we don't want to stick around...
-    print('gr1 Started Polling: %s' % tic())
+    logger.info('gr1 Started Polling: %s' % tic())
     select.select([], [], [], 2)
-    print('gr1 Ended Polling: %s' % tic())
+    logger.info('gr1 Ended Polling: %s' % tic())
 
 def gr2():
     # Busy waits for a second, but we don't want to stick around...
-    print('gr2 Started Polling: %s' % tic())
+    logger.info('gr2 Started Polling: %s' % tic())
     select.select([], [], [], 4)
-    print('gr2 Ended Polling: %s' % tic())
+    logger.info('gr2 Ended Polling: %s' % tic())
 
 def gr3():
-    print("gr3 Hey lets do some stuff while the greenlets poll, %s" % tic())
+    logger.info("gr3 Hey lets do some stuff while the greenlets poll, %s" % tic())
     gevent.sleep(1)
 
 def test_gevent():    
@@ -469,61 +491,79 @@ def setup_routing(app):
         for i in all_rules:
             app.route( i.url, i.methods, i.func)  
     except Exception as e:
-        sys.stdout.write("%s: Exception %s\n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )        
+        logger.exception("Exception %s\n" % ( str(e) ) )
 
 def create_services():
     try:
-        default_rsp = None
+        default_rsp = None, None
+
+        logger=None
+
 
         if hasattr(Config, 'LOGGING') and Config.LOGGING:
+
             logger = logging.getLogger()
             logger.setLevel(logging.DEBUG)
-            ch = logging.StreamHandler(sys.stdout)
+            ch = logging.FileHandler(Config.LOG_FILENAME)
             ch.setLevel(logging.DEBUG)
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             ch.setFormatter(formatter)
+
+            h = logging.handlers.RotatingFileHandler(Config.LOG_FILENAME,
+                                               maxBytes=200000, # in bytes
+                                               backupCount=5,
+                                               )
             logger.addHandler(ch)
+            logger.addHandler(h)
+
 
         app = Bottle()
 
         setup_routing(app)
 
-        app.error_handler[404] = send_error     
+        plugin = bottle.ext.memcache.MemcachePlugin(servers=['localhost:11211'])
+        app.install(plugin)
 
-        return app
+        app.error_handler[400] = send_error
+        app.error_handler[404] = send_error    
+        app.error_handler[405] = send_error
+        app.error_handler[500] = send_general_error
+
+        return app, logger
     except Exception as e:
-        #logger.exception('Main')
-        sys.stdout.write("%s: Exception %s\n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )
+        sys.stdout.write("Exception %s\n" % ( str(e) ) ) 
 
-    return default_rsp
+    return default_rsp, logger
 
 try:
-    app= create_services()  
+    app, logger = create_services()  
 
     mylist = [app]
     if  any (v is None for v in mylist):
-        #logger.critical('%s ERROR ... EXITING ... check the server ...\n' % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) ) )    
-        sys.stdout.write('%s ERROR ... EXITING ... check the server ...\n' % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) ) )    
+        sys.stdout.write('%s ERROR ... EXITING ... check the server ...\n' % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) ) )          
     else: 
         m = ' STARTING ...\n' 
-        #logger.debug('%s %s'  % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) , m))
-        sys.stdout.write('%s %s'  % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT) , m))
+        logger.info('%s'  , m)
+        
 except Exception as e:
-    #logger.exception("%s: Exception %s. Please check server ... \n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )    
-    sys.stdout.write("%s: Exception %s. Please check server ... \n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )
+    sys.stdout.write("%s: Exception %s. Please check server ... \n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )    
+   
 
 
 if __name__ == "__main__":
     try:
 
-        mymap = {}
 
-        thr = gevent.spawn(msg_q.gmsg_main, mymap)
+        mymap = {} 
 
-        app.run(host="0.0.0.0", port=8000, debug=True,reloader=True, server="gevent")
+        if app:
+            thr = gevent.spawn(msg_q.gmsg_main, mymap)
+            app.run(host="0.0.0.0", port=8000, debug=True,reloader=True, server="gevent")
 
-        gevent.sleep(0)  
-        gevent.joinall(thr)
+            logger.info("ENDING ....")
+
+            gevent.sleep(0)  
+            gevent.joinall(thr)
 
     except Exception as e:
         sys.stdout.write("%s: main Exception %s \n" % ( datetime.datetime.strftime(datetime.datetime.now(), Config.LOG_DATETIME_FORMAT), (str(e) ) ) )

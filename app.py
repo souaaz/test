@@ -13,16 +13,15 @@ from connexion import NoContent
 import sqlite3
 import uuid
 
+
+######system status funcs ########
+import psutil
+
 DB_FILENAME = "cwebs_data_store.sqlite"
 LOG_FILE_NAME = '/var/log/supervisor/cwebs_api.log'
-PORT = 8080
+PORT = 9090
 
 ##
-
-# our memory-only fare storage
-FARES = {
-}
-
 
 success_response = {
             "status": "200 OK",
@@ -49,11 +48,7 @@ def get_version():
         }
     return f,  200
 
-def get_all_fares():
-    return [f for f in FARES.values() ]
 
-def get_fares(limit, fare_type=None):
-    return [f for f in FARES.values() if not fare_type or f['fare_type'] == fare_type][:limit]
 
 def get_fare(fare):    
     try:
@@ -119,7 +114,7 @@ def create_fare(fare):
     return error_response, 500        
 
 
-def post_fare(fare, fare_id=None):
+def post_fare(fare):
 
     ks = ["pick_up_street_number", "pick_up_street_name", 'pick_up_city', "pick_up_zip_code", "pickup"]
 
@@ -131,16 +126,8 @@ def post_fare(fare, fare_id=None):
 
     logger.info (  " ADDRESS .... " , address )
 
-    try:
-        if fare_id:
-            exists = fare_id in FARES
-            fare['id'] = fare_id
-            if exists:
-                logger.info('Updating fare %s..', fare_id)
-                FARES[fare_id].update(fare)
-                return NoContent, (200)            
-        else:
-            fare_id = str(uuid.uuid4().hex) #'201722' + str(random.randint(0,100))
+    try:       
+        fare_id = str(uuid.uuid4().hex) #'201722' + str(random.randint(0,100))
 
         logger.info('Creating fare %s..', fare_id)
         fare['created'] = datetime.datetime.utcnow()
@@ -786,6 +773,28 @@ def update_payment_type():
         return error_response, 500
 
     return error_response, 500  
+
+
+def system_status():
+    try:
+        cpu = psutil.cpu_percent(interval=5, percpu=True)       
+        p = psutil.Process(os.getpid())
+       
+        info = p.memory_full_info()
+
+        logger.info ( "cpu={c}  memory info={i} program name={n} exe={e} ".format (c=cpu, i=info, n=p.name(),  e=p.exe()))
+
+        return success_response , 200       
+
+    except Exception as e:
+        error_response ["result"] ["message"] = str(e)        
+        return error_response, 500
+
+    return error_response, 500  
+
+
+##################################################################################################
+
 
 def setup_logging():
    

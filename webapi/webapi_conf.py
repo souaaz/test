@@ -25,5 +25,7 @@ APPNAME = "WEBS"
 SHUTDOWN_TIMEOUT = 10
 DATA_PREFIX = 'fares'
 
+LOGGING = True
+LOG_FILENAME = '/var/log/webapi/webapi_log.out'
 
 

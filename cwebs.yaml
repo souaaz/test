@@ -2,6 +2,13 @@ swagger: '2.0'
 info:
   title: CWEBS API
   version: "0.1"
+
+host: 10.10.1.239:8889
+basePath: '/'
+schemes:
+   - http
+   - https
+
 consumes:
   - application/json
 produces:
@@ -10,6 +17,7 @@ security:
   # enable OAuth protection for all REST endpoints
   # (only active if the TOKENINFO_URL environment variable is set)
   - oauth2: [uid]
+  - apiKeySecurity: []
 
 
 #GET_FLEET_RESOURCE_NAME = '/dispatcher/qtotals/'
@@ -67,8 +75,8 @@ parameters:
     type: integer
     format: int32
 
-
 paths:
+
   /cwebs/version/:
     get:
       tags: [CWEBS]
@@ -85,32 +93,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'            
 
-  /all_fares/:
-    get:
-      tags: ["tests"]
-      summary: Gets all fares
-      operationId: app.get_all_fares
-
-      description: Returns a list containing all fares.
-      responses:
-        200:
-          description: A list of Fare
-          schema:
-            type: array
-            items:
-              required:
-                - username
-              properties:
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                username:
-                  type: string
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'         
+ 
 
   /fares/read_book_order/: 
     post:
@@ -836,26 +819,27 @@ paths:
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'   
+            $ref: '#/definitions/Error' 
 
+  /system_status/:
+    get:
+      tags: [CWEBS, system]
+      operationId: app.system_status
+      summary: system status
+      description:  system status
+    
+      responses:
+        200:
+          description: Return system status
+          schema:
+            type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'            
+      
 
 definitions:
-  Fare: 
-    type: object
-    required:
-      - username
-    properties:
-      firstName:
-        type: string
-      lastName:
-        type: string
-      username:
-        type: string
-  Fares:
-    type: array
-    items:
-      $ref: "#/definitions/Fare" 
-
   DeviceEmergency:
     properties:
       taxi:
@@ -966,7 +950,8 @@ definitions:
         minimum: -180.0
         maximum: 180.0
     allOf:
-     - $ref: "#/definitions/FareDetails"             
+     - $ref: "#/definitions/FareDetails"  
+     - $ref: "#/definitions/ViaAddress"           
  
   FareDetails:   
     properties:
@@ -1167,6 +1152,12 @@ definitions:
           type: integer
           format: int32
           maxItems: 16
+      vip_number:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 1
+
 
   FareCreatedData:
     required:
@@ -1209,6 +1200,7 @@ definitions:
       allOf:       
           - $ref: "#/definitions/FareDetails"        
           - $ref: "#/definitions/FareModifyCancel"
+          - $ref: "#/definitions/ViaAddress"       
 
   FareCancelation:
     type: object
@@ -1730,7 +1722,55 @@ definitions:
         minimum: 0
         maximum: 99999  
         default: 2     
- 
+
+  AddressItem:
+    properties:
+      latitude:
+        type: number 
+        minimum: -90.0000000
+        maximum: 90.000000
+        default: 45.341000000
+      longitude:
+        type: number               
+        minimum: -180.000000
+        maximum: 180.000000        
+        default: -75.9150000006
+      building_name: 
+        type: string
+        default: "building1"
+      apartment_code:
+        type: integer 
+        default: 234
+      apartment_number: 
+        type: integer
+        default: 678
+      street_number: 
+        type: integer      
+        default: 777
+      street_name: 
+        type: string      
+        default: "street_name1"
+      city: 
+        type: string      
+        default: "city1"
+      zone: 
+        type: integer     
+        default: 1
+      zip_code: 
+        type: integer      
+        default: 6788
+
+  ViaAddress:
+    properties:
+      extra_address:
+        type: array
+        items: 
+          $ref: "#/definitions/AddressItem"
+      extra_address_type:
+        type: integer
+        format: int32
+        default: 1
+
   Error:
     type: object
     properties:
@@ -1745,11 +1785,13 @@ definitions:
 
 
 securityDefinitions:
-  OauthSecurity:
-    type: oauth2
-    flow: accessCode
-    authorizationUrl: 'https://oauth.simple.api/authorization'
-    tokenUrl: 'https://oauth.simple.api/token'
+  apiKeySecurity:
+    type: apikey # oauth2 # basic, apiKey or oauth2
+    name: apiKey # Required for apikey
+    flow: accessCode # "implicit", "password", "application" or "accessCode"
+    in: header # "query" or "header". Required for apikey
+    authorizationUrl: 'https://192.168.56.101:8080/authorization'
+    tokenUrl: 'https://192.168.56.101:8080/token'
     scopes:
       admin: Admin scope
       user: User scope
