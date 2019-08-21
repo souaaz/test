@@ -45,5 +45,5 @@ sysv-ipc==0.7.0
 uritemplate==3.0.0
 uWSGI==2.0.14
 webencodings==0.5
-Werkzeug==0.11.15
+Werkzeug==0.15.3
 yarl==0.9.8
