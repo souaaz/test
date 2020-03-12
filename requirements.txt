@@ -16,7 +16,7 @@ coreschema==0.0.4
 Django==1.10.6
 django-rest-swagger==2.1.2
 djangorestframework==3.6.2
-Flask==0.12
+Flask==1.0
 Flask-SQLAlchemy==2.2
 gevent==1.2.1
 greenlet==0.4.12
