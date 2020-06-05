@@ -13,7 +13,7 @@ clickclick==1.2.1
 connexion==1.1.5
 coreapi==2.3.0
 coreschema==0.0.4
-Django==1.11.28
+Django==1.11.29
 django-rest-swagger==2.1.2
 djangorestframework==3.9.1
 Flask==1.0
