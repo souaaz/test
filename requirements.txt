@@ -23,7 +23,7 @@ greenlet==0.4.12
 html5lib==0.999999999
 itsdangerous==0.24
 itypes==1.1.0
-Jinja2==2.9.5
+Jinja2==2.11.3
 jsonschema==2.6.0
 Mail==2.1.0
 MarkupSafe==0.23
